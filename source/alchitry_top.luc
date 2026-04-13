@@ -1,0 +1,105 @@
+module alchitry_top (
+    input clk,              // 100MHz clock
+    input rst_n,            // reset button (active low)
+    output led[8],          // 8 user controllable LEDs
+    input usb_rx,            // USB->Serial input
+    output usb_tx,           // USB->Serial output
+    output io_led[3][8],     // LEDs on IO Shield
+    output io_segment[8],        // 7-segment LEDs on IO Shield
+    output io_select[4],        // Digit select on IO Shield
+    input io_button[5],      // 5 buttons on IO Shield
+    input io_dip[3][8],      // DIP switches on IO Shield
+    output ws_col0,
+    output ws_col1,
+    output ws_col2,
+    output ws_col3,
+    output ws_col4,
+    output ws_col_sel
+) {
+    sig rst                 // reset signal
+
+    .clk(clk) {
+        // The reset conditioner is used to synchronize the reset signal to the FPGA
+        // clock. This ensures the entire FPGA comes out of reset at the same time.
+        reset_conditioner reset_cond  
+    }
+    
+    const CLK_FREQ = $is_sim() ? 1000 : 100000000 // put 1000 for sim, 100000000 otherwise in hardware
+    
+    .clk(clk) {
+        button_conditioner reset_button(#CLK_FREQ(CLK_FREQ), .in(io_button[3]))
+        button_conditioner player_button(#CLK_FREQ(CLK_FREQ), .in(io_button[1]))
+        edge_detector player_rising_edge(.in(player_button.out),#RISE(1),#FALL(0))
+        button_conditioner advance_button(#CLK_FREQ(CLK_FREQ), .in(io_button[0]))
+        edge_detector advance_rising_edge(.in(advance_button.out),#RISE(1),#FALL(0))
+        
+  
+        .rst(rst){
+            datapath datapath
+            
+            #PIXEL_COUNT(9){
+                        ws2812b_controller ws2812b_controller[6]
+                    }
+                    
+            
+            
+               
+        }
+    }
+    
+    
+    sig column[3]
+    sig column_data[18]
+    sig converted_column[10]
+    
+    
+    always{
+        reset_cond.in = ~rst_n  // input raw inverted reset signal
+        rst = reset_cond.out | reset_button.out   // conditioned reset
+        io_led[2][7:0] = 0 //set every io_led to zero first
+        io_led[1][7:0] = 0
+        io_led[0][7:0] = 0
+        led = 8h00             // turn LEDs off
+        io_segment = 8hFF
+        io_select = 4b1111  
+        usb_tx = usb_rx          // loop serial port
+        io_led[1][7:0] = datapath.col_sel_led_data[7:0]
+        
+        io_led[2][7] = io_button[4]
+        
+        // Wire controllers - feed raw data directly
+        ws2812b_controller.input_data[0] = datapath.col0_led_data[17:0]       
+        ws2812b_controller.input_data[1] = datapath.col1_led_data[17:0]
+        ws2812b_controller.input_data[2] = datapath.col2_led_data[17:0]
+        ws2812b_controller.input_data[3] = datapath.col3_led_data[17:0] 
+        ws2812b_controller.input_data[4] = datapath.col4_led_data[17:0]
+        ws2812b_controller.input_data[5] = datapath.col_sel_led_data[17:0]
+
+                
+        // Output to physical pins
+        ws_col0 = ws2812b_controller.ws2812b_data[0]
+        ws_col1 = ws2812b_controller.ws2812b_data[1]
+        ws_col2 = ws2812b_controller.ws2812b_data[2]
+        ws_col3 = ws2812b_controller.ws2812b_data[3]
+        ws_col4 = ws2812b_controller.ws2812b_data[4]
+        ws_col_sel = ws2812b_controller.ws2812b_data[5]
+        
+        datapath.player_button = player_rising_edge.out
+        datapath.advance_button = advance_rising_edge.out
+        led[4:0] = datapath.col_sel_data[4:0]
+        led[7:6] = datapath.col_sel_led_data[1:0]
+        io_led[2][5:0] = datapath.state
+        column = c{io_dip[0][2:0]}
+        case (column) {
+            b000: column_data = datapath.col0_led_data[17:0]
+            b001: column_data = datapath.col1_led_data[17:0]
+            b010: column_data = datapath.col2_led_data[17:0]
+            b011: column_data = datapath.col3_led_data[17:0]
+            b100: column_data = datapath.col4_led_data[17:0]
+            default: column_data = datapath.col0_led_data[17:0]
+        }
+        converted_column = c{column_data[17:16], column_data[13:12], column_data[9:8], column_data[5:4], column_data[1:0]}
+        io_led[0][7:0] = converted_column[7:0]
+        io_led[1][1:0] = converted_column[9:8]
+    }
+}
