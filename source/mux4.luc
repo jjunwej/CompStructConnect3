@@ -1,0 +1,28 @@
+module mux4 (
+    input data0,
+    input data1,
+    input data2,
+    input data3,
+    input s1,
+    input s0,
+    output y
+) {
+    mux_2 mux2to1[3]
+    always {
+        y = 0
+        
+        mux2to1.data0[0] = data0
+        mux2to1.data1[0] = data1
+        mux2to1.s[0] = s0
+        
+        mux2to1.data0[1] = data2
+        mux2to1.data1[1] = data3
+        mux2to1.s[1] = s0
+        
+        mux2to1.data0[2] = mux2to1.y[0]
+        mux2to1.data1[2] = mux2to1.y[1]
+        mux2to1.s[2] = s1
+        
+        y = mux2to1.y[2]
+    }
+}

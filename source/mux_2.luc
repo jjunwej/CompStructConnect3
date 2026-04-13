@@ -1,0 +1,10 @@
+module mux_2 (
+    input data0,
+    input data1,
+    input s,
+    output y
+) {
+    always {
+        y = (~s & data0) | (s & data1)
+    }
+}
