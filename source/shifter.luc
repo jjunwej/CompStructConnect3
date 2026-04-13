@@ -1,0 +1,59 @@
+module shifter #(
+    SIZE = 32 : SIZE > 0
+) (
+    input a[SIZE],
+    input b[5],
+    input alufn[6],
+    output out[SIZE]
+)
+{
+    sig pad
+    x_bit_left_shifter left16b(#SIZE(SIZE), #SHIFT(16),.a(a), .do_shift(b[4]), .pad(pad))
+    x_bit_left_shifter left8b(#SIZE(SIZE), #SHIFT(8),.a(left16b.out), .do_shift(b[3]), .pad(pad))
+    x_bit_left_shifter left4b(#SIZE(SIZE), #SHIFT(4),.a(left8b.out), .do_shift(b[2]), .pad(pad))
+    x_bit_left_shifter left2b(#SIZE(SIZE), #SHIFT(2),.a(left4b.out), .do_shift(b[1]), .pad(pad))
+    x_bit_left_shifter left1b(#SIZE(SIZE), #SHIFT(1),.a(left2b.out), .do_shift(b[0]), .pad(pad))
+    
+    x_bit_right_shifter right16b(#SIZE(SIZE), #SHIFT(16),.a(a), .do_shift(b[4]), .pad(pad))
+    x_bit_right_shifter right8b(#SIZE(SIZE), #SHIFT(8),.a(right16b.out), .do_shift(b[3]), .pad(pad))
+    x_bit_right_shifter right4b(#SIZE(SIZE), #SHIFT(4),.a(right8b.out), .do_shift(b[2]), .pad(pad))
+    x_bit_right_shifter right2b(#SIZE(SIZE), #SHIFT(2),.a(right4b.out), .do_shift(b[1]), .pad(pad))
+    x_bit_right_shifter right1b(#SIZE(SIZE), #SHIFT(1),.a(right2b.out), .do_shift(b[0]), .pad(pad))
+    
+    always {
+        pad = 0
+        out = 0
+        
+        if (alufn[1]) {
+            pad = 1
+        }
+        
+        if (~alufn[0]) {
+            out = left1b.out
+       
+        } else if (alufn[0]) {
+            out = right1b.out
+        }
+        
+    }    
+ } 
+
+
+ // parameter declaration, to be set during module instantiation
+    // default value given is 8
+//    SHIFT = 8 : SHIFT > -1 & SHIFT < 32,
+//    SIZE = 32 : SIZE > 0
+//  )(
+//    input a[SIZE],
+//    input do_shift,
+//    input pad,
+//    output out[SIZE]
+//  ) {
+ 
+  // module declarations
+  // instantiate MUX_2 (32 of them)
+  // other useful intermediary signals, e.g: shifted_bits[32] 
+//  MUX2 shift_unit[SIZE];
+//  sig in_1shift_unit[SIZE]; // input s1 of each shift_unit MUX
+  
+//
