@@ -1,0 +1,21 @@
+module compile_col_sel (
+    input a[32], // current player
+    input b[32], // current column
+    output col_sel_data[32]
+) {
+    sig out[32]
+    const PLAYER_TOKEN = {b10, b01}
+    always {
+        out = 32b0
+        // Write the led data for the column select leds
+        case (b[2:0]) {
+            d0: out[1:0] = PLAYER_TOKEN[a[0]]
+            d1: out[5:4] = PLAYER_TOKEN[a[0]]
+            d2: out[9:8] = PLAYER_TOKEN[a[0]]
+            d3: out[13:12] = PLAYER_TOKEN[a[0]]
+            d4: out[17:16] = PLAYER_TOKEN[a[0]]
+        }
+        col_sel_data = out
+        
+    }
+}

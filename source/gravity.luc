@@ -1,0 +1,53 @@
+module gravity (
+    input a[32],  //Column data
+    input b[32],  //Current player
+    input alufn[6],
+    output out_column[32]
+) {
+    sig drop[32]
+    sig fall[4][32]
+    const PLAYER_TOKEN = c{{b10}, {b01}}
+    always {
+        out_column = 32b0
+        drop = a
+        
+        repeat(i, 4, 13, -4) {
+            if ((~|a[i+4 -:2]) & (|a[i -:2])) {
+                drop[i+4 -:2] = PLAYER_TOKEN[b[0]]
+            }
+        }
+        if (~|a) {
+            drop[1:0] = PLAYER_TOKEN[b[0]]
+        }    
+        
+        //Compute fall
+        if (~|a[13:12]) {
+            fall[3] = c{18b0, a[17:16], a[11:0]}
+        } else {
+            fall[3] = a[31:0]
+        }
+        
+        if (~|a[9:8]) {
+            fall[2] = c{18b0, fall[3][17:12], fall[3][7:0]}
+        } else {
+            fall[2] = fall[3]
+        }
+        if (~|a[5:4]) {
+            fall[1] = c{18b0, fall[2][17:8], fall[2][3:0]}
+        } else {
+            fall[1] = fall[2]
+        }
+        if (~|a[1:0]) {
+            fall[0] = c{18b0, fall[1][17:4]}
+        } else {
+            fall[0] = fall[1]
+        }
+        
+        if (~alufn[2] & |alufn[1:0]) {
+            out_column = drop
+        }
+        if (alufn[2] & ~|alufn[1:0]) {
+            out_column = fall[0]
+        }
+    }
+}

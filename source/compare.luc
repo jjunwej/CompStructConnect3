@@ -1,0 +1,25 @@
+module compare #(
+    SIZE = 32 : SIZE > 0
+)(
+    input a[SIZE],
+    input b[SIZE],
+    input alufn[6],
+    output cmp
+) {
+    adder adder(#SIZE(SIZE), .a(a), .b(b), .alufn(1))
+    
+    always {
+        cmp = 0
+
+        if (alufn[1] & ~alufn[2]){
+            cmp = adder.z
+        }
+        if (~alufn[1] & alufn[2]){
+            cmp = adder.n ^ adder.v
+        }
+        if (alufn[1] & alufn[2]) {
+            cmp = adder.z | adder.n ^ adder.v
+        }
+        
+     }  
+}

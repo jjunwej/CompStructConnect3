@@ -1,0 +1,40 @@
+module compile_player (
+    input a[32],  //raw player data
+    input b[32],  //current compiled data
+    input player,
+    output compiled[32]
+) {
+    sig player_data[5]
+    const PLAYER_TOKEN = {b10, b01}
+    
+    always {
+        
+        
+        //Read the raw player data
+        repeat(i, 5) {
+            if (c{a[4*i+1 -:2]} == PLAYER_TOKEN[player]) {
+                player_data[i] = 1
+            } else {
+                player_data[i] = 0
+            }
+        }
+        
+        //Place the player data into the compiled data at the appropriate column and advance the column
+        case (b[31:29]) {
+            b000:
+                compiled = c{b001, b[28:5], player_data}
+            b001:
+                compiled = c{b010, b[28:10], player_data, b[4:0]} 
+            b010:
+                compiled = c{b011, b[28:15], player_data, b[9:0]} 
+            b011:
+                compiled = c{b100, b[28:20], player_data, b[14:0]} 
+            b100:
+                compiled = c{b000, b[28:25], player_data, b[19:0]}
+            default:
+                compiled = c{b000, b[28:0]}
+                
+        }
+        
+    }
+}

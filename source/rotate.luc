@@ -1,0 +1,16 @@
+module rotate (
+    input a[32],  //Compiled Player 1 data
+    input b[32],  //Compiled Player 2 data
+    input alufn[6],
+    output out_column[32]
+) {
+    always {
+        
+        out_column = 32b0
+        repeat (i, 5, 0) {
+            out_column[17-4*i] = b[(5*i)+alufn[2:0]]
+            out_column[16-4*i] = a[(5*i)+alufn[2:0]]
+        }
+        
+    }
+}
