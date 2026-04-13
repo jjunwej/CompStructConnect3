@@ -1,0 +1,45 @@
+module ws2812b_controller #(
+    PIXEL_COUNT = 9 : PIXEL_COUNT > 0
+) (
+    input clk,
+    input rst,
+    input input_data[PIXEL_COUNT*2],
+    output color[24],
+    output clear,
+    output ws2812b_data
+) {
+    ws2812b_driver driver(#PIXEL_COUNT(PIXEL_COUNT), .rst(rst), .clk(clk))
+    sig update_sig
+    sig clear_sig
+    sig pixel_data_encoded[PIXEL_COUNT][2]
+    sig encoded_colour[2]
+    // Green (11), Blue(10), Red (01), Off (00)
+    const COLOR_ENCODING = {24h000001, 24h010000, 24h000100, 24h0} 
+    always {
+        
+        repeat (i, PIXEL_COUNT) {
+            pixel_data_encoded[i] = input_data[2*i+1 -: 2]
+        }
+        
+        
+        update_sig = 1
+        clear_sig = 0
+        
+        clear = clear_sig
+        color = 0
+        
+        driver.update = update_sig
+        driver.clear = clear_sig
+        
+        if (driver.pixel_address <= PIXEL_COUNT) {
+            encoded_colour = pixel_data_encoded[driver.pixel_address]
+        } else {
+            encoded_colour = b00
+        }
+        
+        //encoded_colour = input_data[(2*driver.pixel_address)+1 -:2]
+        driver.color = COLOR_ENCODING[encoded_colour]
+        
+        ws2812b_data = driver.data
+    }
+}
