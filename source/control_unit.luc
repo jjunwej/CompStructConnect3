@@ -1,0 +1,445 @@
+module control_unit (
+    input clk,  // clock
+    input rst,  // reset
+    input regfile_rd2[32],
+    
+    input player_button,
+    input advance_button,
+    
+    output alufn[6],
+    output bsel[3],
+    output ra1[4],
+    output ra2[4],
+    output ra1sel,
+    output wasel,
+    output wa[5],
+    output we,
+    output wdsel[3],
+    output debug[4],
+    
+//for testing
+    output state[6]
+) {
+    
+    enum States {
+        IDLE,
+        COMPILE_COLUMN_SELECT,
+        PLAYER_INPUTTING,
+        P_ADVANCE_COLUMN,
+        CHECK_COL_OVERFLOW,
+        CHECK_COL_OVERFLOW_BRANCH,
+        RESET_COLUMN_TO_0,
+        COMPUTE_NEW_COL,
+        SETUP_COMPILE_1,
+        COMPUTE_P1_DATA_1,
+        COMPUTE_P1_DATA_2,
+        COMPUTE_P1_DATA_3,
+        COMPUTE_P1_DATA_4,
+        COMPUTE_P1_DATA_5,
+        COMPUTE_P2_DATA_1,
+        COMPUTE_P2_DATA_2,
+        COMPUTE_P2_DATA_3,
+        COMPUTE_P2_DATA_4,
+        COMPUTE_P2_DATA_5,
+        RETURN_TO_MAIN_BRANCH,
+        CHECK_FOR_FINISH_1_1,
+        CHECK_FOR_FINISH_1_2,
+        CHECK_FOR_FINISH_1_BRANCH,
+        ROTATE_1,
+        ROTATE_2,
+        ROTATE_3,
+        ROTATE_4,
+        ROTATE_5,
+        FALL_1,
+        FALL_2,
+        FALL_3,
+        FALL_4,
+        FALL_5,
+        SETUP_COMPILE_2,
+        CHECK_FOR_FINISH_2_1,
+        CHECK_FOR_FINISH_2_2,
+        CHECK_FOR_FINISH_2_BRANCH,
+        CHANGE_PLAYER,
+        CHECK_FOR_P1_WIN,
+        CHECK_FOR_P1_WIN_BRANCH,
+        DISPLAY_P1_WIN,
+        CHECK_FOR_P2_WIN,
+        CHECK_FOR_P2_WIN_BRANCH,
+        DISPLAY_P2_WIN,
+        DISPLAY_TIE,
+        GAME_END,
+        CLEAR_R0,
+        CLEAR_R1,
+        CLEAR_R2,
+        CLEAR_R3,
+        CLEAR_R4,
+        CLEAR_R5,
+        CLEAR_R6,
+        CLEAR_R11
+    }
+    
+    dff game_state[$width(States)](#INIT(States.IDLE), .clk(clk), .rst(rst))
+    
+    always {
+        state = game_state.q
+        
+        //defaults
+        alufn = b000000
+        wdsel = 0
+        bsel = 0
+        ra1 = d0
+        ra2 = d0
+        ra1sel = 0
+        wa = d0
+        wasel = 0
+        we = 0
+        debug = b0000
+        
+        game_state.d = game_state.q
+        if (rst) {
+            game_state.d = States.IDLE
+        } else {
+            case(game_state.q) {
+                States.IDLE:
+                    if(advance_button){
+                        game_state.d = States.COMPILE_COLUMN_SELECT
+                    }
+                States.COMPILE_COLUMN_SELECT:
+                    alufn = b001101
+                    ra1 = d5
+                    ra2 = d6
+                    we = 1
+                    wa = d11
+                    game_state.d = States.PLAYER_INPUTTING
+                States.PLAYER_INPUTTING:
+                    if(player_button){
+                        game_state.d = States.P_ADVANCE_COLUMN
+                    } else if (advance_button) {
+                        game_state.d = States.COMPUTE_NEW_COL
+                    }
+                States.P_ADVANCE_COLUMN:
+                    alufn = b000000
+                    bsel = b010
+                    ra1 = d6
+                    we = 1
+                    wa = d6
+                    game_state.d = States.CHECK_COL_OVERFLOW
+                States.CHECK_COL_OVERFLOW:
+                    alufn = b110011
+                    bsel = b100
+                    ra1 = d6
+                    we = 1
+                    wa = d8
+                    game_state.d = States.CHECK_COL_OVERFLOW_BRANCH
+                States.CHECK_COL_OVERFLOW_BRANCH:
+                    ra2 = d8
+                    if (regfile_rd2[0]){
+                        game_state.d = States.RESET_COLUMN_TO_0
+                    } else {
+                        game_state.d = States.COMPILE_COLUMN_SELECT
+                    }
+                States.RESET_COLUMN_TO_0:
+                    wdsel = b001
+                    we = 1
+                    wa = d6
+                    game_state.d = States.COMPILE_COLUMN_SELECT
+                States.COMPUTE_NEW_COL:
+                    alufn = b000011
+                    ra1sel = 1
+                    ra2 = d5
+                    we = 1
+                    wasel = 1
+                    game_state.d = States.SETUP_COMPILE_1
+                States.SETUP_COMPILE_1:
+                    wdsel = b001
+                    we = 1
+                    wa = d8
+                    game_state.d = States.COMPUTE_P1_DATA_1
+                States.COMPUTE_P1_DATA_1:
+                    alufn = b000101
+                    ra1 = d0
+                    ra2 = d9
+                    we = 1
+                    wa = d9
+                    game_state.d = States.COMPUTE_P1_DATA_2
+                States.COMPUTE_P1_DATA_2:
+                    alufn = b000101
+                    ra1 = d1
+                    ra2 = d9
+                    we = 1
+                    wa = d9
+                    game_state.d = States.COMPUTE_P1_DATA_3
+                States.COMPUTE_P1_DATA_3:
+                    alufn = b000101
+                    ra1 = d2
+                    ra2 = d9
+                    we = 1
+                    wa = d9
+                    game_state.d = States.COMPUTE_P1_DATA_4
+                States.COMPUTE_P1_DATA_4:
+                    alufn = b000101
+                    ra1 = d3
+                    ra2 = d9
+                    we = 1
+                    wa = d9
+                    game_state.d = States.COMPUTE_P1_DATA_5
+                States.COMPUTE_P1_DATA_5:
+                    alufn = b000101
+                    ra1 = d4
+                    ra2 = d9
+                    we = 1
+                    wa = d9
+                    game_state.d = States.COMPUTE_P2_DATA_1
+                States.COMPUTE_P2_DATA_1:
+                    alufn = b000110
+                    ra1 = d0
+                    ra2 = d10
+                    we = 1
+                    wa = d10
+                    game_state.d = States.COMPUTE_P2_DATA_2
+                States.COMPUTE_P2_DATA_2:
+                    alufn = b000110
+                    ra1 = d1
+                    ra2 = d10
+                    we = 1
+                    wa = d10
+                    game_state.d = States.COMPUTE_P2_DATA_3
+                States.COMPUTE_P2_DATA_3:
+                    alufn = b000110
+                    ra1 = d2
+                    ra2 = d10
+                    we = 1
+                    wa = d10
+                    game_state.d = States.COMPUTE_P2_DATA_4
+                States.COMPUTE_P2_DATA_4:
+                    alufn = b000110
+                    ra1 = d3
+                    ra2 = d10
+                    we = 1
+                    wa = d10
+                    game_state.d = States.COMPUTE_P2_DATA_5
+                States.COMPUTE_P2_DATA_5:
+                    alufn = b000110
+                    ra1 = d4
+                    ra2 = d10
+                    we = 1
+                    wa = d10
+                    game_state.d = States.RETURN_TO_MAIN_BRANCH
+                States.RETURN_TO_MAIN_BRANCH:
+                    ra2 = d8
+                    if (~regfile_rd2[0]) {
+                        game_state.d = States.CHECK_FOR_FINISH_1_1
+                    } else {
+                        game_state.d = States.CHECK_FOR_FINISH_2_1
+                    }
+                States.CHECK_FOR_FINISH_1_1:
+                    alufn = b000111
+                    ra1 = d9
+                    ra2 = d10
+                    we = 1
+                    wa = d7
+                    game_state.d = States.CHECK_FOR_FINISH_1_2
+                States.CHECK_FOR_FINISH_1_2:
+                    alufn = b110011
+                    ra1 = d7
+                    bsel = b001
+                    we = 1
+                    wa = d8
+                    game_state.d = States.CHECK_FOR_FINISH_1_BRANCH
+                States.CHECK_FOR_FINISH_1_BRANCH:
+                    ra2 = d8
+                    if (regfile_rd2[0]) {
+                        game_state.d = States.ROTATE_1
+                    } else {
+                        game_state.d = States.CHECK_FOR_P1_WIN
+                    }
+                States.ROTATE_1:
+                    alufn = b001000
+                    ra1 = d9
+                    ra2 = d10
+                    we = 1
+                    wa = d0
+                    game_state.d = States.ROTATE_2
+                States.ROTATE_2:
+                    alufn = b001001
+                    ra1 = d9
+                    ra2 = d10
+                    we = 1
+                    wa = d1
+                    game_state.d = States.ROTATE_3
+                States.ROTATE_3:
+                    alufn = b001010
+                    ra1 = d9
+                    ra2 = d10
+                    we = 1
+                    wa = d2
+                    game_state.d = States.ROTATE_4
+                States.ROTATE_4:
+                    alufn = b001011
+                    ra1 = d9
+                    ra2 = d10
+                    we = 1
+                    wa = d3
+                    game_state.d = States.ROTATE_5
+                States.ROTATE_5:
+                    alufn = b001100
+                    ra1 = d9
+                    ra2 = d10
+                    we = 1
+                    wa = d4
+                    game_state.d = States.FALL_1
+                States.FALL_1:
+                    alufn = b000100
+                    ra1 = d0
+                    we = 1
+                    wa = d0
+                    game_state.d = States.FALL_2
+                States.FALL_2:
+                    alufn = b000100
+                    ra1 = d1
+                    we = 1
+                    wa = d1
+                    game_state.d = States.FALL_3
+                States.FALL_3:
+                    alufn = b000100
+                    ra1 = d2
+                    we = 1
+                    wa = d2
+                    game_state.d = States.FALL_4
+                States.FALL_4:
+                    alufn = b000100
+                    ra1 = d3
+                    we = 1
+                    wa = d3
+                    game_state.d = States.FALL_5
+                States.FALL_5:
+                    alufn = b000100
+                    ra1 = d4
+                    we = 1
+                    wa = d4
+                    game_state.d = States.SETUP_COMPILE_2
+                States.SETUP_COMPILE_2:
+                    wdsel = b010
+                    we = 1
+                    wa = d8
+                    game_state.d = States.COMPUTE_P1_DATA_1
+                States.CHECK_FOR_FINISH_2_1:
+                    alufn = b000111
+                    ra1 = d9
+                    ra2 = d10
+                    we = 1
+                    wa = d7
+                    game_state.d = States.CHECK_FOR_FINISH_2_2
+                States.CHECK_FOR_FINISH_2_2:
+                    alufn = b110011
+                    ra1 = d7
+                    bsel = b001
+                    we = 1
+                    wa = d8
+                    game_state.d = States.CHECK_FOR_FINISH_2_BRANCH
+                States.CHECK_FOR_FINISH_2_BRANCH:
+                    ra2 = d8
+                    if (regfile_rd2[0]) {
+                        game_state.d = States.CHANGE_PLAYER
+                    } else {
+                        game_state.d = States.CHECK_FOR_P1_WIN
+                    }
+                States.CHANGE_PLAYER:
+                    alufn = b010110
+                    ra1 = d5
+                    bsel = b010
+                    we = 1
+                    wa = d5
+                    game_state.d = States.COMPILE_COLUMN_SELECT
+                States.CHECK_FOR_P1_WIN:
+                    alufn = b110011
+                    bsel = b010
+                    ra1 = d7
+                    we = 1
+                    wa = d8
+                    game_state.d = States.CHECK_FOR_P1_WIN_BRANCH
+                States.CHECK_FOR_P1_WIN_BRANCH:
+                    ra2 = d8
+                    if (regfile_rd2[0]) {
+                        game_state.d = States.DISPLAY_P1_WIN
+                    } else {
+                        game_state.d = States.CHECK_FOR_P2_WIN
+                    }
+                States.CHECK_FOR_P2_WIN:
+                    alufn = b110011
+                    bsel = b011
+                    ra1 = d7
+                    we = 1
+                    wa = d8
+                    game_state.d = States.CHECK_FOR_P2_WIN_BRANCH
+                States.CHECK_FOR_P2_WIN_BRANCH:
+                    ra2 = d8
+                    if (regfile_rd2[0]) {
+                        game_state.d = States.DISPLAY_P2_WIN
+                    } else {
+                        game_state.d = States.DISPLAY_TIE
+                    }
+                States.DISPLAY_P1_WIN:
+                    wdsel = b011
+                    we = 1
+                    wa = d11
+                    game_state.d = States.GAME_END
+                States.DISPLAY_P2_WIN:
+                    wdsel = b100
+                    we = 1
+                    wa = d11
+                    game_state.d = States.GAME_END
+                States.DISPLAY_TIE:
+                    wdsel = b101    
+                    we = 1
+                    wa = d11
+                    game_state.d = States.GAME_END
+                States.GAME_END:
+                    if (advance_button) {
+                        game_state.d = States.CLEAR_R0
+                    }
+                States.CLEAR_R0:
+                    wdsel = b001
+                    we = 1
+                    wa = d0
+                    game_state.d = States.CLEAR_R1
+                States.CLEAR_R1:
+                    wdsel = b001
+                    we = 1
+                    wa = d1
+                    game_state.d = States.CLEAR_R2
+                States.CLEAR_R2:
+                    wdsel = b001
+                    we = 1
+                    wa = d2
+                    game_state.d = States.CLEAR_R3
+                States.CLEAR_R3:
+                    wdsel = b001
+                    we = 1
+                    wa = d3
+                    game_state.d = States.CLEAR_R4
+                States.CLEAR_R4:
+                    wdsel = b001
+                    we = 1
+                    wa = d4
+                    game_state.d = States.CLEAR_R5
+                States.CLEAR_R5:
+                    wdsel = b001
+                    we = 1
+                    wa = d5
+                    game_state.d = States.CLEAR_R6
+                States.CLEAR_R6:
+                    wdsel = b001
+                    we = 1
+                    wa = d6
+                    game_state.d = States.CLEAR_R11
+                States.CLEAR_R11:
+                    wdsel = b001
+                    we = 1
+                    wa = d11
+                    game_state.d = States.IDLE
+            }
+        }
+        
+    } 
+}

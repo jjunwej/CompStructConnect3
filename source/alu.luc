@@ -1,0 +1,67 @@
+module alu (
+    input a[32],
+    input b[32],
+    input alufn[6],
+    output out[32],
+    output z,
+    output v,
+    output n
+) 
+    {
+
+    .a(a) {
+        .b(b){
+            multiplier multiplier
+            compile_player compile_player_1(.player(b0))
+            compile_player compile_player_2(.player(b1))
+            check check
+            compile_col_sel compile_col_sel
+            
+            .alufn(alufn){
+                adder adder
+                boolean boolean
+                compare compare
+                shifter shifter
+                gravity gravity
+                rotate rotate
+            }
+        }
+    }
+
+    always {
+        z = adder.z
+        v = adder.v
+        n = adder.n
+        out = 0
+        
+        case (alufn) {
+            b000000: out = adder.s // ADD 
+            b000001: out = adder.s // SUB
+            b000010: out = multiplier.mul // MUL               
+            b000011: out = gravity.out_column // DROP                
+            b000100: out = gravity.out_column // FALL                
+            b000101: out = compile_player_1.compiled // COMPILEPONE                
+            b000110: out = compile_player_2.compiled // COMPILEPTWO                
+            b000111: out = check.result // CHECKCONNECT3            
+            b001000: out = rotate.out_column // ROT0                
+            b001001: out = rotate.out_column // ROT1               
+            b001010: out = rotate.out_column // ROT2               
+            b001011: out = rotate.out_column // ROT3               
+            b001100: out = rotate.out_column // ROT4                
+            b001101: out = compile_col_sel.col_sel_data // COMPILECOLSEL                
+            b011000: out = boolean.bool // AND                
+            b011110: out = boolean.bool // OR                
+            b010110: out = boolean.bool // XOR         
+            b011010: out = boolean.bool // "A"               
+            b100000: out = shifter.out // SHL                
+            b100001: out = shifter.out // SHR               
+            b100011: out = shifter.out // SRA               
+            b110011: out = compare.cmp // CMPEQ                
+            b110101: out = compare.cmp // CMPLT  
+            b110111: out = compare.cmp // CMPLE               
+            default:
+                out = 0
+
+        }
+    }
+}

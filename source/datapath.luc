@@ -1,0 +1,99 @@
+module datapath(
+    input clk,  // clock
+    input rst,  // reset
+    
+    // UI buttons
+    input player_button,
+    input advance_button,
+    
+    //led ports
+    output col0_led_data[32],
+    output col1_led_data[32],
+    output col2_led_data[32],
+    output col3_led_data[32],
+    output col4_led_data[32],
+    output col_sel_data[32],
+    output col_sel_led_data[32],
+    
+    //for debugging
+    output col_data[32],
+    output state[6]
+    
+)
+
+{ 
+    
+ 
+    alu alu 
+    
+    .clk(clk){
+        .rst(rst){
+            
+            control_unit control_unit(
+            .player_button(player_button),
+            .advance_button(advance_button)
+            )
+        
+            regfiles regfiles(
+                .we(control_unit.we), 
+                .ra2(control_unit.ra2)
+            )
+        }
+        
+        
+    }
+    
+    always {
+        //for testing
+        col_data = regfiles.col_sel_led_out
+        col_sel_led_data = regfiles.col_sel_led_out
+        state = control_unit.state
+        
+        alu.a = regfiles.rd1
+        alu.alufn = control_unit.alufn
+        control_unit.regfile_rd2 = regfiles.rd2
+        regfiles.wd = alu.out
+        alu.b = regfiles.rd2
+        
+        //led ports
+        col0_led_data = regfiles.col0_out
+        col1_led_data = regfiles.col1_out
+        col2_led_data = regfiles.col2_out
+        col3_led_data = regfiles.col3_out
+        col4_led_data = regfiles.col4_out
+        col_sel_data = regfiles.col_sel_out
+        
+        //ra1sel
+        case (control_unit.ra1sel) {
+            b1: regfiles.ra1 = regfiles.col_sel_out[3:0]
+            default: regfiles.ra1 = control_unit.ra1
+        }
+        //wasel
+        case (control_unit.wasel) {
+            b1: regfiles.wa = regfiles.col_sel_out[2:0]
+            default: regfiles.wa = control_unit.wa
+        }
+
+        //bsel
+        case (control_unit.bsel) {
+            b000: alu.b = regfiles.rd2
+            b001: alu.b = b0
+            b010: alu.b = b1
+            b011: alu.b = b10
+            b100: alu.b = b101
+            default: alu.b = regfiles.rd2
+        }
+        
+        //wdsel
+        case (control_unit.wdsel) {
+            b000: regfiles.wd = alu.out
+            b001: regfiles.wd = b0
+            b010: regfiles.wd = b1
+            b011: regfiles.wd = b010001000100010001
+            b100: regfiles.wd = b100010001000100010
+            b101: regfiles.wd = b110011001100110011
+            default: regfiles.wd = alu.out
+        }
+
+    }
+}
