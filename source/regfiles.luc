@@ -1,0 +1,106 @@
+module regfiles (
+    input clk,  // clock
+    input rst,  // reset
+    input wa[5],
+    input wd[32],
+    input we,
+    input ra1[4],
+    input ra2[4],
+    output rd1[32],
+    output rd2[32],
+    
+    //led data
+    output col0_out[32],
+    output col1_out[32],
+    output col2_out[32],
+    output col3_out[32],
+    output col4_out[32],
+    output col_sel_out[32],
+    output col_sel_led_out[32]
+    
+    //for testing
+    
+    
+) {
+    .clk(clk){
+            .rst(rst){
+                dff col0[32](#INIT(0))
+                dff col1[32](#INIT(0))
+                dff col2[32](#INIT(0))
+                dff col3[32](#INIT(0))
+                dff col4[32](#INIT(0))
+                dff current_player[32](#INIT(0))
+                dff col_sel[32](#INIT(0))
+                dff winner_check[32](#INIT(0))
+                dff comp_results_current_branch[32](#INIT(0))
+                dff p1_comp[32](#INIT(0))
+                dff p2_comp[32](#INIT(0))
+                dff col_sel_led_data[32](#INIT(0))
+            }
+        }
+    always {
+       
+        //led ports
+        col0_out = col0.q
+        col1_out = col1.q
+        col2_out = col2.q
+        col3_out = col3.q
+        col4_out = col4.q
+        
+        col_sel_out = col_sel.q
+        col_sel_led_out = col_sel_led_data.q
+        
+        //write port
+        if (we) {
+            case(wa){
+                d0: col0.d = wd
+                d1: col1.d = wd
+                d2: col2.d = wd
+                d3: col3.d = wd
+                d4: col4.d = wd
+                d5: current_player.d = wd
+                d6: col_sel.d = wd
+                d7: winner_check.d = wd
+                d8: comp_results_current_branch.d = wd
+                d9: p1_comp.d = wd
+                d10: p2_comp.d = wd
+                d11: col_sel_led_data.d = wd
+            }
+        }
+        
+        //read1 port
+        case(ra1){
+                d0: rd1 = col0.q
+                d1: rd1 = col1.q
+                d2: rd1 = col2.q
+                d3: rd1 = col3.q
+                d4: rd1 = col4.q
+                d5: rd1 = current_player.q
+                d6: rd1 = col_sel.q
+                d7: rd1 = winner_check.q
+                d8: rd1 = comp_results_current_branch.q
+                d9: rd1 = p1_comp.q
+                d10: rd1 = p2_comp.q
+                d11: rd1 = col_sel_led_data.q
+            default: rd1 = 0
+       }
+        
+        // read2 port
+        case(ra2){
+                d0: rd2 = col0.q
+                d1: rd2 = col1.q
+                d2: rd2 = col2.q
+                d3: rd2 = col3.q
+                d4: rd2 = col4.q
+                d5: rd2 = current_player.q
+                d6: rd2 = col_sel.q
+                d7: rd2 = winner_check.q
+                d8: rd2 = comp_results_current_branch.q
+                d9: rd2 = p1_comp.q
+                d10: rd2 = p2_comp.q
+                d11: rd2 = col_sel_led_data.q
+            default: rd2 = 0
+        }
+       
+    }
+}
