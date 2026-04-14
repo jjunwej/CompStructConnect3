@@ -23,12 +23,12 @@ module check (
             if ( |( ab[i] & (ab[i] >> 1) & (ab[i] >> 2) & NO_ROW_4_3 ) ) {
                 result[i] = 1
             }
-            // Check diagonal up
+            // Check diagonal up right
             if ( |( ab[i] & (ab[i] >> 6) & (ab[i]) >> 12 & NO_ROW_4_3 ) ) {
                 result[i] = 1
 
             }
-            // Check diagonal down
+            // Check diagonal down right
             if ( |( ab[i] & (ab[i]>> 4) & (ab[i] >> 8) & NO_ROW_0_1 ) ) {
                 result[i] = 1
 
