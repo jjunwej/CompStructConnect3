@@ -15,7 +15,10 @@ module datapath(
     output col_sel_data[32],
     output col_sel_led_data[32],
     
-    //for debugging
+    //debug port
+    output debug[4],
+    
+    //for testing
     output col_data[32],
     output state[6]
     
@@ -53,6 +56,7 @@ module datapath(
         alu.alufn = control_unit.alufn
         control_unit.regfile_rd2 = regfiles.rd2
         regfiles.wd = alu.out
+        debug = control_unit.debug
         alu.b = regfiles.rd2
         
         //led ports
@@ -62,6 +66,7 @@ module datapath(
         col3_led_data = regfiles.col3_out
         col4_led_data = regfiles.col4_out
         col_sel_data = regfiles.col_sel_out
+        
         
         //ra1sel
         case (control_unit.ra1sel) {
@@ -81,6 +86,8 @@ module datapath(
             b010: alu.b = b1
             b011: alu.b = b10
             b100: alu.b = b101
+            b101: alu.b = c{b1, 31b0}
+            b110: alu.b = 32d17500000   
             default: alu.b = regfiles.rd2
         }
         

@@ -18,9 +18,6 @@ module regfiles (
     output col_sel_out[32],
     output col_sel_led_out[32]
     
-    //for testing
-    
-    
 ) {
     .clk(clk){
             .rst(rst){
@@ -31,7 +28,7 @@ module regfiles (
                 dff col4[32](#INIT(0))
                 dff current_player[32](#INIT(0))
                 dff col_sel[32](#INIT(0))
-                dff winner_check[32](#INIT(0))
+                dff winner_check_timer[32](#INIT(0))
                 dff comp_results_current_branch[32](#INIT(0))
                 dff p1_comp[32](#INIT(0))
                 dff p2_comp[32](#INIT(0))
@@ -39,7 +36,6 @@ module regfiles (
             }
         }
     always {
-       
         //led ports
         col0_out = col0.q
         col1_out = col1.q
@@ -60,7 +56,7 @@ module regfiles (
                 d4: col4.d = wd
                 d5: current_player.d = wd
                 d6: col_sel.d = wd
-                d7: winner_check.d = wd
+                d7: winner_check_timer.d = wd
                 d8: comp_results_current_branch.d = wd
                 d9: p1_comp.d = wd
                 d10: p2_comp.d = wd
@@ -77,7 +73,7 @@ module regfiles (
                 d4: rd1 = col4.q
                 d5: rd1 = current_player.q
                 d6: rd1 = col_sel.q
-                d7: rd1 = winner_check.q
+                d7: rd1 = winner_check_timer.q
                 d8: rd1 = comp_results_current_branch.q
                 d9: rd1 = p1_comp.q
                 d10: rd1 = p2_comp.q
@@ -94,7 +90,7 @@ module regfiles (
                 d4: rd2 = col4.q
                 d5: rd2 = current_player.q
                 d6: rd2 = col_sel.q
-                d7: rd2 = winner_check.q
+                d7: rd2 = winner_check_timer.q
                 d8: rd2 = comp_results_current_branch.q
                 d9: rd2 = p1_comp.q
                 d10: rd2 = p2_comp.q

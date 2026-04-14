@@ -45,11 +45,19 @@ module control_unit (
         CHECK_FOR_FINISH_1_1,
         CHECK_FOR_FINISH_1_2,
         CHECK_FOR_FINISH_1_BRANCH,
+        RESET_TIMER_1,
+        WAIT_1_INCREMENT,
+        WAIT_1_CHECK,
+        WAIT_1_BRANCH,
         ROTATE_1,
         ROTATE_2,
         ROTATE_3,
         ROTATE_4,
         ROTATE_5,
+        RESET_TIMER_2,
+        WAIT_2_INCREMENT,
+        WAIT_2_CHECK,
+        WAIT_2_BRANCH,
         FALL_1,
         FALL_2,
         FALL_3,
@@ -75,7 +83,9 @@ module control_unit (
         CLEAR_R4,
         CLEAR_R5,
         CLEAR_R6,
-        CLEAR_R11
+        CLEAR_R11,
+        CLEAR_P1_COMP,
+        CLEAR_P2_COMP
     }
     
     dff game_state[$width(States)](#INIT(States.IDLE), .clk(clk), .rst(rst))
@@ -154,6 +164,16 @@ module control_unit (
                     wdsel = b001
                     we = 1
                     wa = d8
+                    game_state.d = States.CLEAR_R9
+                States.CLEAR_R9:
+                    wdsel = b001
+                    we = 1
+                    wa = d9
+                    game_state.d = States.CLEAR_R10
+                States.CLEAR_R10:
+                    wdsel = b001
+                    we = 1
+                    wa = d10
                     game_state.d = States.COMPUTE_P1_DATA_1
                 States.COMPUTE_P1_DATA_1:
                     alufn = b000101
@@ -249,10 +269,38 @@ module control_unit (
                 States.CHECK_FOR_FINISH_1_BRANCH:
                     ra2 = d8
                     if (regfile_rd2[0]) {
-                        game_state.d = States.ROTATE_1
+                        game_state.d = States.RESET_TIMER_1
                     } else {
                         game_state.d = States.CHECK_FOR_P1_WIN
                     }
+
+                States.RESET_TIMER_1:
+                    wdsel = b001   
+                    we = 1
+                    wa = d7
+                    game_state.d = States.WAIT_1_INCREMENT
+                States.WAIT_1_INCREMENT:
+                    alufn = b000000   
+                    ra1 = d7
+                    bsel = b010  
+                    we = 1
+                    wa = d7
+                    game_state.d = States.WAIT_1_CHECK
+                States.WAIT_1_CHECK:
+                    alufn = b110011
+                    ra1 = d7
+                    bsel = b110       
+                    we = 1
+                    wa = d8
+                    game_state.d = States.WAIT_1_BRANCH
+                States.WAIT_1_BRANCH:
+                    ra2 = d8
+                    if (regfile_rd2[0]) {
+                        game_state.d = States.ROTATE_1
+                    } else {
+                        game_state.d = States.WAIT_1_INCREMENT
+                    }
+
                 States.ROTATE_1:
                     alufn = b001000
                     ra1 = d9
@@ -287,7 +335,35 @@ module control_unit (
                     ra2 = d10
                     we = 1
                     wa = d4
-                    game_state.d = States.FALL_1
+                    game_state.d = States.RESET_TIMER
+
+                States.RESET_TIMER:
+                    wdsel = b001     
+                    we = 1
+                    wa = d7
+                    game_state.d = States.WAIT_2_INCREMENT
+                States.WAIT_2_INCREMENT:
+                    alufn = b000000  
+                    ra1 = d7
+                    bsel = b010   
+                    we = 1
+                    wa = d7
+                    game_state.d = States.WAIT_2_CHECK
+                States.WAIT_2_CHECK:
+                    alufn = b110011    
+                    ra1 = d7
+                    bsel = b110   
+                    we = 1
+                    wa = d8
+                    game_state.d = States.WAIT_2_BRANCH
+                States.WAIT_2_BRANCH:
+                    ra2 = d8
+                    if (regfile_rd2[0]) {
+                        game_state.d = States.FALL_1
+                    } else {
+                        game_state.d = States.WAIT_2_INCREMENT
+                    }
+
                 States.FALL_1:
                     alufn = b000100
                     ra1 = d0
@@ -318,6 +394,7 @@ module control_unit (
                     we = 1
                     wa = d4
                     game_state.d = States.SETUP_COMPILE_2
+
                 States.SETUP_COMPILE_2:
                     wdsel = b010
                     we = 1
